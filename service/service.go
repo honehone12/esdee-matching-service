@@ -1,12 +1,18 @@
 package service
 
 import (
+	"esdee-matching-service/logger"
+	"esdee-matching-service/queue"
+	"esdee-matching-service/roller"
 	"esdee-matching-service/server"
+	"esdee-matching-service/server/context"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
 )
 
 func ErrorEmptyEnvParam(env string) error {
@@ -45,6 +51,24 @@ func Run() {
 		log.Fatal(err)
 	}
 
-	s := server.NewServer(name, version, listenAt)
-	s.Run()
+	e := echo.New()
+	q := queue.New(e.Logger, 100, 10*time.Second)
+	r := roller.New(e.Logger, q, 2, 100*time.Millisecond)
+	qErr := q.StartMonitoring()
+	rErr := r.StartRolling()
+	go Catch(qErr, e.Logger)
+	go Catch(rErr, e.Logger)
+
+	server.NewServer(
+		e,
+		context.NewMetadata(name, version),
+		context.NewServiceComponents(q, r),
+		listenAt,
+	).Run()
+}
+
+func Catch(eChan <-chan error, logger logger.Logger) {
+	for err := range eChan {
+		logger.Error(err)
+	}
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"esdee-matching-service/server/context"
+	"esdee-matching-service/server/handlers"
 	"esdee-matching-service/server/validator"
 
 	"github.com/labstack/echo/v4"
@@ -10,34 +11,46 @@ import (
 )
 
 type Server struct {
-	metadata context.Metadata
-	listenAt string
+	echo       *echo.Echo
+	metadata   *context.Metadata
+	components *context.ServiceComponents
+	listenAt   string
 }
 
-func NewServer(name string, version string, listenAt string) *Server {
+func NewServer(
+	echo *echo.Echo,
+	metadata *context.Metadata,
+	components *context.ServiceComponents,
+	listenAt string,
+) *Server {
 	return &Server{
-		metadata: context.NewBasicMetadata(name, version),
-		listenAt: listenAt,
+		echo:       echo,
+		metadata:   metadata,
+		components: components,
+		listenAt:   listenAt,
 	}
 }
 
 func (s *Server) ConvertContext(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := &context.Context{
-			Context:  c,
-			Metadata: s.metadata,
+			Context:           c,
+			Metadata:          s.metadata,
+			ServiceComponents: s.components,
 		}
 		return next(ctx)
 	}
 }
 
 func (s *Server) Run() {
-	e := echo.New()
-	e.Use(s.ConvertContext)
-	e.Validator = validator.NewValidator()
-	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
+	s.echo.Use(s.ConvertContext)
+	s.echo.Validator = validator.NewValidator()
+	s.echo.Use(middleware.Recover())
+	s.echo.Use(middleware.Logger())
 
-	e.Logger.SetLevel(log.WARN)
-	e.Logger.Fatal(e.Start(s.listenAt))
+	s.echo.GET("/", handlers.Root)
+	s.echo.GET("/ticket/create", handlers.TicketCreate)
+
+	s.echo.Logger.SetLevel(log.INFO)
+	s.echo.Logger.Fatal(s.echo.Start(s.listenAt))
 }
