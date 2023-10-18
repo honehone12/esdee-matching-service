@@ -1,11 +1,10 @@
 package service
 
 import (
-	"esdee-matching-service/logger"
-	"esdee-matching-service/queue"
-	"esdee-matching-service/roller"
+	"esdee-matching-service/matching"
 	"esdee-matching-service/server"
 	"esdee-matching-service/server/context"
+	"esdee-matching-service/status"
 	"fmt"
 	"log"
 	"os"
@@ -52,23 +51,38 @@ func Run() {
 	}
 
 	e := echo.New()
-	q := queue.New(e.Logger, 100, 10*time.Second)
-	r := roller.New(e.Logger, q, 2, 100*time.Millisecond)
-	qErr := q.StartMonitoring()
-	rErr := r.StartRolling()
-	go Catch(qErr, e.Logger)
-	go Catch(rErr, e.Logger)
+	q := matching.NewMatchingQueue(e.Logger, 100, 10*time.Second)
+	m := status.NewStatusMap(e.Logger, 10*time.Second)
+	r := matching.NewRoller(e.Logger, q, m, 2, 100*time.Millisecond)
+
+	go Catch(
+		e.Logger,
+		q.StartMonitoring(),
+		m.StartMonitoring(),
+		r.StartRolling(),
+	)
 
 	server.NewServer(
 		e,
 		context.NewMetadata(name, version),
-		context.NewServiceComponents(q, r),
+		context.NewServiceComponents(q, r, m, m),
 		listenAt,
 	).Run()
 }
 
-func Catch(eChan <-chan error, logger logger.Logger) {
-	for err := range eChan {
-		logger.Error(err)
+func Catch(
+	logger echo.Logger,
+	qErr <-chan error,
+	mErr <-chan error,
+	rErr <-chan error,
+) {
+	var err error
+	select {
+	case err = <-qErr:
+	case err = <-mErr:
+	case err = <-rErr:
 	}
+
+	// fatal here for Debugging
+	logger.Fatal(err)
 }

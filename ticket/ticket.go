@@ -38,6 +38,6 @@ func (t *Ticket) String() string {
 	return t.uuid.String()
 }
 
-func (t *Ticket) Raw() [16]byte {
-	return t.uuid
+func (t *Ticket) Raw() []byte {
+	return t.uuid[:]
 }

@@ -1,29 +1,43 @@
 package context
 
 import (
-	"esdee-matching-service/queue"
-	"esdee-matching-service/roller"
+	"esdee-matching-service/matching"
+	"esdee-matching-service/status"
 )
 
 type ServiceComponents struct {
-	queue  queue.QueueHandle
-	roller roller.RollerHandle
+	matchingEnqueue matching.MatchingEnqueueHandle
+	roller          matching.RollerHandle
+	statusAdd       status.StatusMapAddHandle
+	statusConsume   status.StatusMapConsumeHandle
 }
 
 func NewServiceComponents(
-	queue queue.QueueHandle,
-	roller roller.RollerHandle,
+	enqueue matching.MatchingEnqueueHandle,
+	roller matching.RollerHandle,
+	add status.StatusMapAddHandle,
+	consume status.StatusMapConsumeHandle,
 ) *ServiceComponents {
 	return &ServiceComponents{
-		queue:  queue,
-		roller: roller,
+		matchingEnqueue: enqueue,
+		roller:          roller,
+		statusAdd:       add,
+		statusConsume:   consume,
 	}
 }
 
-func (c *ServiceComponents) Queue() queue.QueueHandle {
-	return c.queue
+func (c *ServiceComponents) MatchingEnqueue() matching.MatchingEnqueueHandle {
+	return c.matchingEnqueue
 }
 
-func (c *ServiceComponents) Roller() roller.RollerHandle {
+func (c *ServiceComponents) Roller() matching.RollerHandle {
 	return c.roller
+}
+
+func (c *ServiceComponents) StatusAdd() status.StatusMapAddHandle {
+	return c.statusAdd
+}
+
+func (c *ServiceComponents) StatusConsume() status.StatusMapConsumeHandle {
+	return c.statusConsume
 }

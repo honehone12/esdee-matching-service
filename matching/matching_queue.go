@@ -1,4 +1,4 @@
-package queue
+package matching
 
 import (
 	"errors"
@@ -9,9 +9,13 @@ import (
 	lib "github.com/Workiva/go-datastructures/queue"
 )
 
-type QueueHandle interface {
+type MatchingEnqueueHandle interface {
 	Len() int64
 	Enqueue(*ticket.Ticket) error
+}
+
+type MatchingDequeueHandle interface {
+	Len() int64
 	Dequeue(int64) ([]*ticket.Ticket, error)
 }
 
@@ -31,7 +35,7 @@ var (
 	ErrorUnexpectedTypeQueued = errors.New("queued interface was not type expected")
 )
 
-func New(
+func NewMatchingQueue(
 	logger logger.Logger,
 	initialCapacity int64,
 	monitoringInterval time.Duration,
