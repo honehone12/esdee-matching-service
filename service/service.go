@@ -1,6 +1,7 @@
 package service
 
 import (
+	"esdee-matching-service/game"
 	"esdee-matching-service/matching"
 	"esdee-matching-service/server"
 	"esdee-matching-service/server/context"
@@ -12,6 +13,20 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+)
+
+const (
+	DummyGameAddress = "127.0.0.1"
+	DummyGamePort    = "9999"
+)
+
+const (
+	MatchingUnit           = 2
+	MatchingRollerInterval = 100 * time.Millisecond
+
+	MatchingQueueInitialCapacity    = 100
+	MatchingQueueMonitoringInterval = 10 * time.Second
+	StatusMapMonitoringInterval     = 10 * time.Second
 )
 
 func ErrorEmptyEnvParam(env string) error {
@@ -51,9 +66,18 @@ func Run() {
 	}
 
 	e := echo.New()
-	q := matching.NewMatchingQueue(e.Logger, 100, 10*time.Second)
-	m := status.NewStatusMap(e.Logger, 10*time.Second)
-	r := matching.NewRoller(e.Logger, q, m, 2, 100*time.Millisecond)
+	g := game.NewDummy(DummyGameAddress, DummyGamePort)
+	q := matching.NewMatchingQueue(
+		e.Logger,
+		MatchingQueueInitialCapacity,
+		MatchingQueueMonitoringInterval,
+	)
+	m := status.NewStatusMap(e.Logger, StatusMapMonitoringInterval)
+	r := matching.NewRoller(
+		e.Logger, q, m, g,
+		MatchingUnit,
+		MatchingRollerInterval,
+	)
 
 	go Catch(
 		e.Logger,
@@ -65,7 +89,7 @@ func Run() {
 	server.NewServer(
 		e,
 		context.NewMetadata(name, version),
-		context.NewServiceComponents(q, r, m, m),
+		context.NewServiceComponents(q, r, m, m, g),
 		listenAt,
 	).Run()
 }

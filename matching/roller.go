@@ -2,6 +2,7 @@ package matching
 
 import (
 	"errors"
+	"esdee-matching-service/game"
 	"esdee-matching-service/logger"
 	"esdee-matching-service/status"
 	"time"
@@ -20,6 +21,7 @@ type Roller struct {
 	setting RollerSetting
 	queue   MatchingDequeueHandle
 	mapping status.StatusMapRWHandle
+	gameIp  game.GameServerIp
 	logger  logger.Logger
 	eChan   chan error
 }
@@ -32,6 +34,7 @@ func NewRoller(
 	logger logger.Logger,
 	queue MatchingDequeueHandle,
 	mapping status.StatusMapRWHandle,
+	gameIp game.GameServerIp,
 	unit int64,
 	interval time.Duration,
 ) *Roller {
@@ -42,6 +45,7 @@ func NewRoller(
 		},
 		queue:   queue,
 		mapping: mapping,
+		gameIp:  gameIp,
 		logger:  logger,
 		eChan:   make(chan error),
 	}
@@ -74,7 +78,7 @@ TICK:
 				continue TICK
 			}
 
-			ip := "127.0.0.1:9999"
+			ip := r.gameIp.GetNextProcessIp()
 			uuids := make([]string, r.setting.MatchingUnit)
 			for j := int64(0); j < r.setting.MatchingUnit; j++ {
 				uuids[j] = tickets[j].String()

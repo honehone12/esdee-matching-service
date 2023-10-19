@@ -1,6 +1,7 @@
 package context
 
 import (
+	"esdee-matching-service/game"
 	"esdee-matching-service/matching"
 	"esdee-matching-service/status"
 )
@@ -10,6 +11,7 @@ type ServiceComponents struct {
 	roller          matching.RollerHandle
 	statusAdd       status.StatusMapAddHandle
 	statusConsume   status.StatusMapConsumeHandle
+	gameServerIp    game.GameServerIp
 }
 
 func NewServiceComponents(
@@ -17,12 +19,14 @@ func NewServiceComponents(
 	roller matching.RollerHandle,
 	add status.StatusMapAddHandle,
 	consume status.StatusMapConsumeHandle,
+	gameIp game.GameServerIp,
 ) *ServiceComponents {
 	return &ServiceComponents{
 		matchingEnqueue: enqueue,
 		roller:          roller,
 		statusAdd:       add,
 		statusConsume:   consume,
+		gameServerIp:    gameIp,
 	}
 }
 
@@ -40,4 +44,8 @@ func (c *ServiceComponents) StatusAdd() status.StatusMapAddHandle {
 
 func (c *ServiceComponents) StatusConsume() status.StatusMapConsumeHandle {
 	return c.statusConsume
+}
+
+func (c *ServiceComponents) GameServerIp() game.GameServerIp {
+	return c.gameServerIp
 }

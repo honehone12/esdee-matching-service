@@ -50,6 +50,8 @@ func (s *Server) Run() {
 
 	s.echo.GET("/", handlers.Root)
 	s.echo.GET("/ticket/create", handlers.TicketCreate)
+	s.echo.POST("/status/poll", handlers.StatusPoll)
+	s.echo.POST("/status/standby", handlers.StatusStandby)
 
 	s.echo.Logger.SetLevel(log.INFO)
 	s.echo.Logger.Fatal(s.echo.Start(s.listenAt))
