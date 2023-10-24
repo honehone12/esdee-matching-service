@@ -78,7 +78,7 @@ TICK:
 				continue TICK
 			}
 
-			ip := r.gameIp.GetNextProcessIp()
+			address, port := r.gameIp.GetNextProcessIp()
 			uuids := make([]string, r.setting.MatchingUnit)
 			for j := int64(0); j < r.setting.MatchingUnit; j++ {
 				uuids[j] = tickets[j].String()
@@ -91,12 +91,15 @@ TICK:
 					continue TICK
 				}
 
-				if err = s.SetAsDone(ip, uuids); err != nil {
+				if err = s.SetAsDone(address, port, uuids); err != nil {
 					r.eChan <- err
 					continue TICK
 				}
 			}
-			r.logger.Infof("[MATCHING] ip: %s, uuids: %v", ip, uuids)
+			r.logger.Infof(
+				"[MATCHING] address: %s, port: %s, uuids: %v",
+				address, port, uuids,
+			)
 		}
 	}
 }

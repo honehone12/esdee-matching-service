@@ -11,8 +11,9 @@ const (
 )
 
 type MatchingResult struct {
-	Ip    string
-	Uuids []string
+	Address string
+	Port    string
+	Uuids   []string
 }
 
 type StatusValue struct {
@@ -34,8 +35,9 @@ func NewStatus() *Status {
 		value: StatusValue{
 			StatusCode: StatusWaiting,
 			Result: MatchingResult{
-				Ip:    "",
-				Uuids: nil,
+				Address: "",
+				Port:    "",
+				Uuids:   nil,
 			},
 		},
 		rwLock: sync.RWMutex{},
@@ -48,7 +50,7 @@ func (s *Status) IsDone() bool {
 	return s.value.StatusCode == StatusDone
 }
 
-func (s *Status) SetAsDone(ip string, uuids []string) error {
+func (s *Status) SetAsDone(address string, port string, uuids []string) error {
 	s.rwLock.Lock()
 	defer s.rwLock.Unlock()
 
@@ -56,7 +58,8 @@ func (s *Status) SetAsDone(ip string, uuids []string) error {
 		return ErrorStatusCodeAlreadyDone
 	}
 
-	s.value.Result.Ip = ip
+	s.value.Result.Address = address
+	s.value.Result.Port = port
 	s.value.Result.Uuids = uuids
 	s.value.StatusCode = StatusDone
 	return nil

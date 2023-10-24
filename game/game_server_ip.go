@@ -1,9 +1,7 @@
 package game
 
-import "fmt"
-
 type GameServerIp interface {
-	GetNextProcessIp() string
+	GetNextProcessIp() (string, string)
 }
 
 type DummyGameServerIp struct {
@@ -18,6 +16,6 @@ func NewDummy(address string, port string) *DummyGameServerIp {
 	}
 }
 
-func (g *DummyGameServerIp) GetNextProcessIp() string {
-	return fmt.Sprintf("%s:%s", g.address, g.port)
+func (g *DummyGameServerIp) GetNextProcessIp() (string, string) {
+	return g.address, g.port
 }
